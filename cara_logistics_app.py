@@ -102,7 +102,13 @@ if st.button("Run Optimization"):
 
     st.subheader("Flow Breakdown by Route")
     flow_df = pd.DataFrame([
-        {"From": s, "To": d, "Tons": x[(s, d)].varValue, "Cost per Ton": costs.loc[s, d], "Total Cost": x[(s, d)].varValue * costs.loc[s, d]}
+        {
+            "From": s,
+            "To": d,
+            "Tons": x[(s, d)].varValue,
+            "Cost per Ton": costs.loc[s, d],
+            "Total Cost": x[(s, d)].varValue * costs.loc[s, d]
+        }
         for (s, d) in routes if x[(s, d)].varValue > 0
     ])
     bar_chart = alt.Chart(flow_df).mark_bar().encode(
@@ -125,7 +131,8 @@ if st.button("Run Optimization"):
                 'start_lon': s_lon,
                 'end_lat': d_lat,
                 'end_lon': d_lon,
-                'tons': tons
+                'tons': tons,
+                'tooltip': f"{s} → {d}: {tons:.1f} tons"
             })
 
     map_df = pd.DataFrame(map_lines)
@@ -139,9 +146,20 @@ if st.button("Run Optimization"):
             get_color='[200, 30, 0, 160]',
             pickable=True,
             auto_highlight=True,
+            get_tooltip='tooltip'
+        )
+        text_layer = pdk.Layer(
+            "TextLayer",
+            data=map_df,
+            get_position='[start_lon, start_lat]',
+            get_text='tooltip',
+            get_size=14,
+            get_color='[0, 0, 0, 200]',
+            get_angle=0,
+            get_alignment_baseline="bottom"
         )
         view_state = pdk.ViewState(latitude=37, longitude=-95, zoom=3.5, pitch=0)
-        st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
+        st.pydeck_chart(pdk.Deck(layers=[layer, text_layer], initial_view_state=view_state, tooltip={"text": "{tooltip}"}))
 
     st.subheader("Model Status and Shadow Prices")
     st.write(f"Model Status: **{LpStatus[model.status]}**")
