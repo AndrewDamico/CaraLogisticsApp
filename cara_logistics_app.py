@@ -136,13 +136,13 @@ if st.button("Run Optimization"):
             })
 
     map_df = pd.DataFrame(map_lines)
-        # Scale tons to a nicer line width for visualization
-        min_width, max_width = 2, 10
-        t_min, t_max = map_df['tons'].min(), map_df['tons'].max()
-        if t_max > t_min:
-            map_df['line_width'] = map_df['tons'].apply(lambda t: min_width + (max_width - min_width) * (t - t_min) / (t_max - t_min))
-        else:
-            map_df['line_width'] = min_width
+    # Scale tons to a nicer line width for visualization
+    min_width, max_width = 2, 10
+    t_min, t_max = map_df['tons'].min(), map_df['tons'].max()
+    if t_max > t_min:
+        map_df['line_width'] = map_df['tons'].apply(lambda t: min_width + (max_width - min_width) * (t - t_min) / (t_max - t_min))
+    else:
+        map_df['line_width'] = min_width
     if not map_df.empty:
         line_layer = pdk.Layer(
             "LineLayer",
