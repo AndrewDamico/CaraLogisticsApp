@@ -143,7 +143,7 @@ if st.button("Run Optimization"):
             get_source_position='[start_lon, start_lat]',
             get_target_position='[end_lon, end_lat]',
             get_width='tons',
-            get_color='[255, 140, 0]',
+            get_color='[0, 100, 255]',,
             pickable=True,
             auto_highlight=True
         )
@@ -152,7 +152,7 @@ if st.button("Run Optimization"):
             data=map_df,
             get_position='[start_lon, start_lat]',
             get_radius=20000,
-            get_color='[0, 100, 255]',
+            get_color='[0, 100, 255]',,
             pickable=True,
             get_fill_color='[0, 100, 255]'
         )
