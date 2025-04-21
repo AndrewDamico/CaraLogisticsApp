@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
 import altair as alt
+import pydeck as pdk
 
 st.set_page_config(page_title="Cara Logistics Optimizer", layout="wide")
 st.title("🚚 Cara Orange Growers - Transportation Optimizer")
@@ -15,6 +16,16 @@ st.markdown("Edit supply, demand, and costs, then click **Run Optimization** to 
 # ------------------------------
 regions = ["Indian River, FL", "Rio Grande Valley, TX", "Central Valley, CA"]
 rdcs = ["Atlanta, GA", "Chicago, IL", "Dallas, TX", "Los Angeles, CA"]
+
+region_coords = {
+    "Indian River, FL": [27.6, -80.4],
+    "Rio Grande Valley, TX": [26.3, -98.1],
+    "Central Valley, CA": [36.6, -119.7],
+    "Atlanta, GA": [33.7, -84.4],
+    "Chicago, IL": [41.9, -87.6],
+    "Dallas, TX": [32.8, -96.8],
+    "Los Angeles, CA": [34.0, -118.2]
+}
 
 def default_supply():
     return pd.DataFrame({"Region": regions, "Supply (tons)": [150, 170, 200]})
@@ -101,6 +112,36 @@ if st.button("Run Optimization"):
         tooltip=['From', 'To', 'Tons', 'Cost per Ton', 'Total Cost']
     ).properties(width=800, height=300)
     st.altair_chart(bar_chart, use_container_width=True)
+
+    st.subheader("Map View of Transportation Routes")
+    map_lines = []
+    for (s, d) in routes:
+        tons = x[(s, d)].varValue
+        if tons > 0:
+            s_lat, s_lon = region_coords[s]
+            d_lat, d_lon = region_coords[d]
+            map_lines.append({
+                'start_lat': s_lat,
+                'start_lon': s_lon,
+                'end_lat': d_lat,
+                'end_lon': d_lon,
+                'tons': tons
+            })
+
+    map_df = pd.DataFrame(map_lines)
+    if not map_df.empty:
+        layer = pdk.Layer(
+            "LineLayer",
+            data=map_df,
+            get_source_position='[start_lon, start_lat]',
+            get_target_position='[end_lon, end_lat]',
+            get_width='tons',
+            get_color='[200, 30, 0, 160]',
+            pickable=True,
+            auto_highlight=True,
+        )
+        view_state = pdk.ViewState(latitude=37, longitude=-95, zoom=3.5, pitch=0)
+        st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
 
     st.subheader("Model Status and Shadow Prices")
     st.write(f"Model Status: **{LpStatus[model.status]}**")
