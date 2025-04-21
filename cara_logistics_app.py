@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,29 +10,44 @@ st.title("🚚 Cara Orange Growers - Transportation Optimizer")
 st.markdown("Edit supply, demand, and costs, then click **Run Optimization** to solve.")
 
 # ------------------------------
-# Editable Inputs
+# Editable Tables
 # ------------------------------
 regions = ["Indian River, FL", "Rio Grande Valley, TX", "Central Valley, CA"]
 rdcs = ["Atlanta, GA", "Chicago, IL", "Dallas, TX", "Los Angeles, CA"]
 
-supply = {r: st.number_input(f"Supply: {r}", min_value=0, value=150 if r == regions[0] else 170 if r == regions[1] else 200) for r in regions}
-demand = {d: st.number_input(f"Demand: {d}", min_value=0, value=140 if d == rdcs[0] else 130) for d in rdcs}
+def default_supply():
+    return pd.DataFrame({"Region": regions, "Supply (tons)": [150, 170, 200]})
+
+def default_demand():
+    return pd.DataFrame({"RDC": rdcs, "Demand (tons)": [140, 130, 120, 130]})
+
+def default_costs():
+    return pd.DataFrame(
+        [
+            [500, 700, 800, 1200],
+            [400, 600, 300, 1000],
+            [900, 850, 650, 400]
+        ],
+        index=regions,
+        columns=rdcs
+    )
+
+st.subheader("Supply Capacities")
+supply_df = st.data_editor(default_supply(), num_rows="fixed", use_container_width=True)
+
+st.subheader("RDC Demand Requirements")
+demand_df = st.data_editor(default_demand(), num_rows="fixed", use_container_width=True)
 
 st.subheader("Transportation Costs (USD per ton)")
-costs_data = []
-for r in regions:
-    row = []
-    for d in rdcs:
-        default = 500 if (r, d) == (regions[0], rdcs[0]) else 700 if r == regions[0] else 400 if r == regions[1] else 900
-        row.append(st.number_input(f"{r} → {d}", min_value=0, value=default))
-    costs_data.append(row)
-
-costs = pd.DataFrame(costs_data, index=regions, columns=rdcs)
+costs = st.data_editor(default_costs(), use_container_width=True)
 
 # ------------------------------
 # Optimization Trigger
 # ------------------------------
 if st.button("Run Optimization"):
+    supply = dict(zip(supply_df["Region"], supply_df["Supply (tons)"]))
+    demand = dict(zip(demand_df["RDC"], demand_df["Demand (tons)"]))
+
     model = LpProblem("Minimize Transportation Cost", LpMinimize)
     routes = [(s, d) for s in supply for d in demand]
     x = LpVariable.dicts("route", routes, lowBound=0, cat='Continuous')
