@@ -137,29 +137,28 @@ if st.button("Run Optimization"):
 
     map_df = pd.DataFrame(map_lines)
     if not map_df.empty:
-        layer = pdk.Layer(
+        line_layer = pdk.Layer(
             "LineLayer",
             data=map_df,
             get_source_position='[start_lon, start_lat]',
             get_target_position='[end_lon, end_lat]',
             get_width='tons',
-            get_color='[200, 30, 0, 160]',
+            get_color='[255, 140, 0]',
             pickable=True,
-            auto_highlight=True,
-            get_tooltip='tooltip'
+            auto_highlight=True
         )
-        text_layer = pdk.Layer(
-            "TextLayer",
+        scatter_layer = pdk.Layer(
+            "ScatterplotLayer",
             data=map_df,
             get_position='[start_lon, start_lat]',
-            get_text='tooltip',
-            get_size=14,
-            get_color='[0, 0, 0, 200]',
-            get_angle=0,
-            get_alignment_baseline="bottom"
+            get_radius=20000,
+            get_color='[0, 100, 255]',
+            pickable=True,
+            get_fill_color='[0, 100, 255]'
         )
+        tooltip_text = {"html": "<b>{tooltip}</b>", "style": {"backgroundColor": "steelblue", "color": "white"}}
         view_state = pdk.ViewState(latitude=37, longitude=-95, zoom=3.5, pitch=0)
-        st.pydeck_chart(pdk.Deck(layers=[layer, text_layer], initial_view_state=view_state, tooltip={"text": "{tooltip}"}))
+        st.pydeck_chart(pdk.Deck(layers=[line_layer, scatter_layer], initial_view_state=view_state, tooltip=tooltip_text))
 
     st.subheader("Model Status and Shadow Prices")
     st.write(f"Model Status: **{LpStatus[model.status]}**")
