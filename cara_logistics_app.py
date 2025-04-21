@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from pulp import LpProblem, LpMinimize, LpVariable, lpSum, LpStatus, value
+import altair as alt
 
 st.set_page_config(page_title="Cara Logistics Optimizer", layout="wide")
 st.title("🚚 Cara Orange Growers - Transportation Optimizer")
@@ -87,6 +88,19 @@ if st.button("Run Optimization"):
     )
     fig = go.Figure(data=[sankey_data])
     st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Flow Breakdown by Route")
+    flow_df = pd.DataFrame([
+        {"From": s, "To": d, "Tons": x[(s, d)].varValue, "Cost per Ton": costs.loc[s, d], "Total Cost": x[(s, d)].varValue * costs.loc[s, d]}
+        for (s, d) in routes if x[(s, d)].varValue > 0
+    ])
+    bar_chart = alt.Chart(flow_df).mark_bar().encode(
+        x=alt.X('Tons:Q', title='Shipment Volume (Tons)'),
+        y=alt.Y('From:N', title='From Region'),
+        color='To:N',
+        tooltip=['From', 'To', 'Tons', 'Cost per Ton', 'Total Cost']
+    ).properties(width=800, height=300)
+    st.altair_chart(bar_chart, use_container_width=True)
 
     st.subheader("Model Status and Shadow Prices")
     st.write(f"Model Status: **{LpStatus[model.status]}**")
